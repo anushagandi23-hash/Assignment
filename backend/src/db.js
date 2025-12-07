@@ -18,13 +18,20 @@ const initializeDatabase = async () => {
       CREATE TABLE IF NOT EXISTS shows (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
-        from_location VARCHAR(255) NOT NULL,
-        to_location VARCHAR(255) NOT NULL,
+        from_location VARCHAR(255),
+        to_location VARCHAR(255),
         start_time TIMESTAMP NOT NULL,
         total_seats INT NOT NULL,
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );
+    `);
+
+    // Add missing columns if they don't exist (for migration)
+    await pool.query(`
+      ALTER TABLE shows 
+      ADD COLUMN IF NOT EXISTS from_location VARCHAR(255) DEFAULT 'Unknown',
+      ADD COLUMN IF NOT EXISTS to_location VARCHAR(255) DEFAULT 'Unknown';
     `);
 
     // Create seats table

@@ -47,7 +47,7 @@ export const ShowProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const newShow = await apiClient.createShow(name, fromLocation, toLocation, startTime, totalSeats);
       setShows(prev => [...prev, newShow]);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to create show';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to add bus';
       setError(errorMessage);
       console.error('Error creating show:', err);
       throw err;

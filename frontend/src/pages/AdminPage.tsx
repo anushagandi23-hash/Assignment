@@ -151,7 +151,7 @@ export const AdminPage: React.FC = () => {
     <Layout title="Admin Dashboard">
       <div className="admin-container">
         <div className="admin-header">
-          <h2>Create New Show</h2>
+          <h2>Add new Bus</h2>
           <button className="btn btn-logout" onClick={() => {
             logout();
             navigate('/');
@@ -179,9 +179,9 @@ export const AdminPage: React.FC = () => {
         <div className="admin-grid">
           <div className="form-section">
             <form onSubmit={handleSubmit} className="create-show-form">
-              <h3>{editingShowId ? 'Edit Show' : 'Create New Show'}</h3>
+              <h3>{editingShowId ? 'Edit Bus' : 'Add new bus'}</h3>
               <div className="form-group">
-                <label htmlFor="name">Bus Route Name *</label>
+                <label htmlFor="name">Bus Name *</label>
                 <input
                   type="text"
                   id="name"
@@ -253,7 +253,7 @@ export const AdminPage: React.FC = () => {
                   className="btn btn-primary"
                   disabled={loading}
                 >
-                  {loading ? (editingShowId ? 'Updating...' : 'Creating...') : (editingShowId ? '✏️ Update Show' : '+ Create Show')}
+                  {loading ? (editingShowId ? 'Updating...' : 'Adding...') : (editingShowId ? '✏️ Update Bus' : '+ Add Bus')}
                 </button>
                 {editingShowId && (
                   <button

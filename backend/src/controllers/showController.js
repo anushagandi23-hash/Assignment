@@ -65,7 +65,10 @@ exports.createShow = async (req, res) => {
   } catch (err) {
     await client.query("ROLLBACK");
     console.error("Error creating show:", err);
-    res.status(500).json({ error: "Failed to create show" });
+    res.status(500).json({ 
+      error: "Failed to add bus",
+      details: err.message 
+    });
   } finally {
     client.release();
   }
