@@ -73,11 +73,14 @@ const initializeDatabase = async () => {
     console.log("✓ Database schema initialized successfully");
   } catch (err) {
     console.error("✗ Error initializing database schema:", err);
-    process.exit(1);
+    console.warn("⚠️  Continuing despite database error. Server will still start.");
+    // Don't exit, allow server to start and retry connection later
   }
 };
 
-// Call initialization on module load
-initializeDatabase();
+// Call initialization on module load (non-blocking)
+initializeDatabase().catch(err => {
+  console.error("Database initialization error:", err);
+});
 
 module.exports = pool;
