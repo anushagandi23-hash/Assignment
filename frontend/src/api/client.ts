@@ -38,13 +38,29 @@ class ApiClient {
     return data.show;
   }
 
-  async createShow(name: string, startTime: string, totalSeats: number): Promise<Show> {
+  async createShow(name: string, fromLocation: string, toLocation: string, startTime: string, totalSeats: number): Promise<Show> {
     const { data } = await this.client.post<{ show: Show }>('/admin/shows', {
       name,
+      fromLocation,
+      toLocation,
       startTime,
       totalSeats,
     });
     return data.show;
+  }
+
+  async updateShow(id: number, name: string, fromLocation: string, toLocation: string, startTime: string): Promise<Show> {
+    const { data } = await this.client.put<{ show: Show }>(`/admin/shows/${id}`, {
+      name,
+      fromLocation,
+      toLocation,
+      startTime,
+    });
+    return data.show;
+  }
+
+  async deleteShow(id: number): Promise<void> {
+    await this.client.delete(`/admin/shows/${id}`);
   }
 
   // ============ BOOKING ENDPOINTS ============
@@ -60,6 +76,13 @@ class ApiClient {
   async getBooking(bookingId: number): Promise<Booking> {
     const { data } = await this.client.get<{ booking: Booking }>(
       `/bookings/${bookingId}`
+    );
+    return data.booking;
+  }
+
+  async confirmBooking(bookingId: number): Promise<Booking> {
+    const { data } = await this.client.post<{ booking: Booking }>(
+      `/bookings/${bookingId}/confirm`
     );
     return data.booking;
   }

@@ -40,16 +40,48 @@ export const ShowProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  const createShow = useCallback(async (name: string, startTime: string, totalSeats: number) => {
+  const createShow = useCallback(async (name: string, fromLocation: string, toLocation: string, startTime: string, totalSeats: number) => {
     setLoading(true);
     setError(null);
     try {
-      const newShow = await apiClient.createShow(name, startTime, totalSeats);
+      const newShow = await apiClient.createShow(name, fromLocation, toLocation, startTime, totalSeats);
       setShows(prev => [...prev, newShow]);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to create show';
       setError(errorMessage);
       console.error('Error creating show:', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const updateShow = useCallback(async (id: number, name: string, fromLocation: string, toLocation: string, startTime: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const updatedShow = await apiClient.updateShow(id, name, fromLocation, toLocation, startTime);
+      setShows(prev => prev.map(show => show.id === id ? updatedShow : show));
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update show';
+      setError(errorMessage);
+      console.error('Error updating show:', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const deleteShow = useCallback(async (id: number) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await apiClient.deleteShow(id);
+      setShows(prev => prev.filter(show => show.id !== id));
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to delete show';
+      setError(errorMessage);
+      console.error('Error deleting show:', err);
       throw err;
     } finally {
       setLoading(false);
@@ -64,6 +96,8 @@ export const ShowProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     fetchShows,
     fetchShowById,
     createShow,
+    updateShow,
+    deleteShow,
   };
 
   return (

@@ -36,8 +36,10 @@ app.use(express.json());
 
 // ============ ROUTES ============
 const bookingRoutes = require("./routes/bookingRoutes");
+const authRoutes = require("./routes/authRoutes");
 
 // Mount all routes under /api prefix
+app.use("/api/auth", authRoutes);
 app.use("/api", bookingRoutes);
 
 // Health check endpoint

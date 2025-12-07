@@ -25,10 +25,31 @@
 }
 
 .show-name {
-  margin: 0;
+  margin: 0 0 0.5rem 0;
   font-size: 1.3rem;
   color: #333;
   font-weight: 600;
+}
+
+.route-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: #666;
+}
+
+.route-info .location {
+  font-weight: 600;
+  color: #667eea;
+  background: #f0f0ff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.route-info .arrow {
+  color: #999;
+  font-size: 1.2rem;
 }
 
 .show-details {
@@ -45,6 +66,26 @@
 
 .detail-item:last-child {
   border-bottom: none;
+}
+
+.detail-item.occupancy {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.occupancy-bar {
+  width: 100%;
+  height: 8px;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.occupancy-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ffc107, #ff9800, #f44336);
+  transition: width 0.3s ease;
 }
 
 .detail-item .label {

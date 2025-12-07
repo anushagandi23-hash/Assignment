@@ -92,25 +92,23 @@ exports.bookSeats = async (req, res) => {
       );
     }
 
-    // 6. Mark booking as CONFIRMED
-    await client.query(
-      `UPDATE bookings SET status='CONFIRMED', updated_at=NOW()
-       WHERE id=$1`,
-      [bookingId]
-    );
+    // 6. Keep booking as PENDING - user needs to confirm at counter
+    // Status will remain PENDING until explicitly confirmed
+    // No update needed - it's already set to PENDING on creation
 
     // 7. Commit transaction
     await client.query("COMMIT");
 
     res.status(201).json({
-      message: "Booking confirmed successfully",
+      message: "Seats locked successfully. Please proceed to confirm your booking.",
       booking: {
         id: bookingId,
         showId: parseInt(showId),
-        seatNumbers: seatRows.rows.map((s) => s.seat_number),
-        status: "CONFIRMED",
+        seats: seatRows.rows.map((s) => s.seat_number),
+        status: "PENDING",
         createdAt: bookingRes.rows[0].created_at,
         expiresAt: bookingRes.rows[0].expires_at,
+        updatedAt: bookingRes.rows[0].created_at,
       },
     });
   } catch (err) {
@@ -251,4 +249,58 @@ exports.expireBookings = async (req, res) => {
   } finally {
     client.release();
   }
+};
+
+// ============ CONFIRM BOOKING ============
+const confirmBooking = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+
+    if (!bookingId) {
+      return res.status(400).json({ error: "Booking ID is required" });
+    }
+
+    // Update booking status to CONFIRMED
+    const result = await pool.query(
+      `UPDATE bookings 
+       SET status='CONFIRMED', updated_at=NOW()
+       WHERE id=$1
+       RETURNING *`,
+      [bookingId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Booking not found" });
+    }
+
+    const booking = result.rows[0];
+
+    // Get all seats for this booking
+    const seatsResult = await pool.query(
+      `SELECT seat_number FROM seats 
+       WHERE id IN (SELECT seat_id FROM booking_seats WHERE booking_id=$1)`,
+      [bookingId]
+    );
+
+    res.json({
+      message: "Booking confirmed successfully",
+      booking: {
+        id: booking.id,
+        status: booking.status,
+        seats: seatsResult.rows.map((s) => s.seat_number),
+        expiresAt: booking.expires_at,
+        updatedAt: booking.updated_at,
+      },
+    });
+  } catch (err) {
+    console.error("Error confirming booking:", err);
+    res.status(500).json({ error: "Failed to confirm booking" });
+  }
+};
+
+module.exports = {
+  bookSeats: exports.bookSeats,
+  getBooking: exports.getBooking,
+  expireBookings: exports.expireBookings,
+  confirmBooking,
 };

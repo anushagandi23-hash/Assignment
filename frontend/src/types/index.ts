@@ -3,6 +3,8 @@
 export interface Show {
   id: number;
   name: string;
+  from_location: string;
+  to_location: string;
   start_time: string;
   total_seats: number;
   available_seats?: number;
@@ -35,8 +37,17 @@ export interface Booking {
 export interface AuthContextType {
   isAuthenticated: boolean;
   userRole: 'admin' | 'user';
-  login: (role: 'admin' | 'user') => void;
+  user: UserProfile | null;
+  login: (role: 'admin' | 'user', userData?: UserProfile) => void;
   logout: () => void;
+}
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'user';
+  createdAt?: string;
 }
 
 export interface ShowContextType {
@@ -46,7 +57,9 @@ export interface ShowContextType {
   error: string | null;
   fetchShows: () => Promise<void>;
   fetchShowById: (id: number) => Promise<void>;
-  createShow: (name: string, startTime: string, totalSeats: number) => Promise<void>;
+  createShow: (name: string, fromLocation: string, toLocation: string, startTime: string, totalSeats: number) => Promise<void>;
+  updateShow: (id: number, name: string, fromLocation: string, toLocation: string, startTime: string) => Promise<void>;
+  deleteShow: (id: number) => Promise<void>;
 }
 
 export interface BookingContextType {
@@ -56,7 +69,9 @@ export interface BookingContextType {
   error: string | null;
   bookSeats: (showId: number, seatNumbers: string[]) => Promise<void>;
   fetchBooking: (bookingId: number) => Promise<void>;
+  confirmBooking: (bookingId: number) => Promise<void>;
   selectSeat: (seatNumber: string) => void;
   deselectSeat: (seatNumber: string) => void;
   clearSelection: () => void;
+  resetBooking: () => void;
 }

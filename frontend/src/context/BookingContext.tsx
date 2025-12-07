@@ -24,6 +24,12 @@ export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children })
     setSelectedSeats([]);
   }, []);
 
+  const resetBooking = useCallback(() => {
+    setBooking(null);
+    setSelectedSeats([]);
+    setError(null);
+  }, []);
+
   const bookSeats = useCallback(async (showId: number, seatNumbers: string[]) => {
     setLoading(true);
     setError(null);
@@ -57,6 +63,23 @@ export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   }, []);
 
+  const confirmBookingHandler = useCallback(async (bookingId: number) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const confirmedBooking = await apiClient.confirmBooking(bookingId);
+      setBooking(confirmedBooking);
+      return confirmedBooking;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to confirm booking';
+      setError(errorMessage);
+      console.error('Error confirming booking:', err);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const value: BookingContextType = {
     booking,
     selectedSeats,
@@ -64,9 +87,11 @@ export const BookingProvider: React.FC<{ children: ReactNode }> = ({ children })
     error,
     bookSeats,
     fetchBooking,
+    confirmBooking: confirmBookingHandler,
     selectSeat,
     deselectSeat,
     clearSelection,
+    resetBooking,
   };
 
   return (

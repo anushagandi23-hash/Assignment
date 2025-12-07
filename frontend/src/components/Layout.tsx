@@ -1,4 +1,5 @@
 import React from 'react';
+import { UserProfile } from './UserProfile';
 import './Layout.css';
 
 interface LayoutProps {
@@ -14,6 +15,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, title }) => {
           <h1 className="logo">🎫 Modex</h1>
           <p className="tagline">Ticket Booking System</p>
         </div>
+        <UserProfile />
       </header>
 
       {title && (
@@ -27,7 +29,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, title }) => {
       </main>
 
       <footer className="footer">
-        <p>&copy; 2024 Modex. All rights reserved.</p>
+        <p>&copy; 2025 Modex. All rights reserved.</p>
       </footer>
     </div>
   );

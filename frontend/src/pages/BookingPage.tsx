@@ -11,15 +11,18 @@ export const BookingPage: React.FC = () => {
   const { showId } = useParams<{ showId: string }>();
   const navigate = useNavigate();
   const { selectedShow, loading: showLoading, fetchShowById } = useShows();
-  const { selectedSeats, booking, loading, error, bookSeats, selectSeat, deselectSeat, clearSelection } = useBooking();
+  const { selectedSeats, booking, loading, error, bookSeats, confirmBooking, selectSeat, deselectSeat, clearSelection, resetBooking } = useBooking();
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [alertType, setAlertType] = useState<'success' | 'error' | 'info'>('info');
+  const [confirmingBooking, setConfirmingBooking] = useState(false);
 
   useEffect(() => {
     if (showId) {
+      // Reset booking when switching to a different show
+      resetBooking();
       fetchShowById(parseInt(showId));
     }
-  }, [showId]);
+  }, [showId, resetBooking, fetchShowById]);
 
   const handleBooking = async () => {
     if (selectedSeats.length === 0) {
@@ -30,13 +33,32 @@ export const BookingPage: React.FC = () => {
 
     try {
       await bookSeats(parseInt(showId!), selectedSeats);
-      setAlertMessage('Booking confirmed! 🎉');
+      setAlertMessage('Seats locked! Please confirm your booking.');
       setAlertType('success');
-      // Booking context will update and show success message
-      // No auto-redirect - let user see confirmation
     } catch (err) {
       setAlertMessage(err instanceof Error ? err.message : 'Failed to complete booking');
       setAlertType('error');
+    }
+  };
+
+  const handleConfirmBooking = async () => {
+    if (!booking || !booking.id) {
+      setAlertMessage('No booking found');
+      setAlertType('error');
+      return;
+    }
+
+    setConfirmingBooking(true);
+    try {
+      await confirmBooking(booking.id);
+      setAlertMessage('Booking confirmed! 🎉');
+      setAlertType('success');
+      // The booking context will update and trigger re-render showing confirmation page
+    } catch (err) {
+      setAlertMessage(err instanceof Error ? err.message : 'Failed to confirm booking');
+      setAlertType('error');
+    } finally {
+      setConfirmingBooking(false);
     }
   };
 
@@ -102,6 +124,60 @@ export const BookingPage: React.FC = () => {
               </p>
               <button className="btn btn-primary" onClick={() => navigate('/')}>
                 ← Back to Shows
+              </button>
+            </div>
+          </>
+        ) : booking && booking.status === 'PENDING' ? (
+          <>
+            <div className="booking-header">
+              <button className="btn btn-link" onClick={() => navigate('/')}>
+                ← Back to Shows
+              </button>
+            </div>
+            <div className="booking-pending">
+              <div className="pending-icon">⏳</div>
+              <h3>Seats Locked!</h3>
+              <p className="pending-message">Your seats have been reserved temporarily.</p>
+              <div className="booking-details">
+                <div className="detail-row">
+                  <span>Booking ID:</span>
+                  <strong>{booking.id ? `#${booking.id}` : 'N/A'}</strong>
+                </div>
+                <div className="detail-row">
+                  <span>Seats:</span>
+                  <strong>{booking.seats && booking.seats.length > 0 ? booking.seats.join(', ') : 'N/A'}</strong>
+                </div>
+                <div className="detail-row">
+                  <span>Show:</span>
+                  <strong>{selectedShow.name}</strong>
+                </div>
+                <div className="detail-row">
+                  <span>Date & Time:</span>
+                  <strong>{new Date(selectedShow.start_time).toLocaleString()}</strong>
+                </div>
+                <div className="detail-row">
+                  <span>Expires At:</span>
+                  <strong>{booking.expiresAt ? new Date(booking.expiresAt).toLocaleString() : 'N/A'}</strong>
+                </div>
+              </div>
+              <p className="booking-warning">
+                ⚠️ Your booking expires in 2 minutes. Please confirm now to complete your purchase.
+              </p>
+              <button
+                className="btn btn-primary"
+                onClick={handleConfirmBooking}
+                disabled={confirmingBooking}
+              >
+                {confirmingBooking ? 'Confirming...' : 'Confirm Booking'}
+              </button>
+              <button
+                className="btn btn-secondary"
+                onClick={() => {
+                  clearSelection();
+                  window.location.reload();
+                }}
+              >
+                Cancel & Select Different Seats
               </button>
             </div>
           </>

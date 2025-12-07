@@ -18,6 +18,8 @@ const initializeDatabase = async () => {
       CREATE TABLE IF NOT EXISTS shows (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
+        from_location VARCHAR(255) NOT NULL,
+        to_location VARCHAR(255) NOT NULL,
         start_time TIMESTAMP NOT NULL,
         total_seats INT NOT NULL,
         created_at TIMESTAMP DEFAULT NOW(),

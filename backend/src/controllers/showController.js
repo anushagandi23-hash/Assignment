@@ -6,12 +6,12 @@ const { v4: uuidv4 } = require("uuid");
  * POST /api/admin/shows
  */
 exports.createShow = async (req, res) => {
-  const { name, startTime, totalSeats } = req.body;
+  const { name, fromLocation, toLocation, startTime, totalSeats } = req.body;
 
   // Validation
-  if (!name || !startTime || !totalSeats) {
+  if (!name || !fromLocation || !toLocation || !startTime || !totalSeats) {
     return res.status(400).json({
-      error: "Missing required fields: name, startTime, totalSeats",
+      error: "Missing required fields: name, fromLocation, toLocation, startTime, totalSeats",
     });
   }
 
@@ -26,10 +26,10 @@ exports.createShow = async (req, res) => {
 
     // Create show
     const showRes = await client.query(
-      `INSERT INTO shows(name, start_time, total_seats)
-       VALUES ($1, $2, $3)
-       RETURNING id, name, start_time, total_seats, created_at`,
-      [name, new Date(startTime), totalSeats]
+      `INSERT INTO shows(name, from_location, to_location, start_time, total_seats)
+       VALUES ($1, $2, $3, $4, $5)
+       RETURNING id, name, from_location, to_location, start_time, total_seats, created_at`,
+      [name, fromLocation, toLocation, new Date(startTime), totalSeats]
     );
 
     const showId = showRes.rows[0].id;
@@ -80,10 +80,13 @@ exports.getAllShows = async (req, res) => {
     const result = await pool.query(
       `SELECT 
         id, 
-        name, 
+        name,
+        from_location,
+        to_location, 
         start_time, 
         total_seats,
         (SELECT COUNT(*) FROM seats WHERE show_id = shows.id AND status = 'AVAILABLE') as available_seats,
+        (SELECT COUNT(*) FROM seats WHERE show_id = shows.id AND status = 'BOOKED') as booked_seats,
         created_at
        FROM shows
        ORDER BY start_time ASC`
@@ -108,7 +111,7 @@ exports.getShowById = async (req, res) => {
 
   try {
     const showRes = await pool.query(
-      `SELECT id, name, start_time, total_seats, created_at
+      `SELECT id, name, from_location, to_location, start_time, total_seats, created_at
        FROM shows
        WHERE id = $1`,
       [id]
@@ -141,5 +144,98 @@ exports.getShowById = async (req, res) => {
   } catch (err) {
     console.error("Error fetching show:", err);
     res.status(500).json({ error: "Failed to fetch show" });
+  }
+};
+
+/**
+ * Admin: Update a show
+ * PUT /api/admin/shows/:id
+ */
+exports.updateShow = async (req, res) => {
+  const { id } = req.params;
+  const { name, fromLocation, toLocation, startTime } = req.body;
+
+  if (!name || !fromLocation || !toLocation || !startTime) {
+    return res.status(400).json({
+      error: "Missing required fields: name, fromLocation, toLocation, startTime",
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE shows
+       SET name = $1, from_location = $2, to_location = $3, start_time = $4, updated_at = NOW()
+       WHERE id = $5
+       RETURNING id, name, from_location, to_location, start_time, total_seats, created_at`,
+      [name, fromLocation, toLocation, new Date(startTime), id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Show not found" });
+    }
+
+    res.json({
+      message: "Show updated successfully",
+      show: result.rows[0],
+    });
+  } catch (err) {
+    console.error("Error updating show:", err);
+    res.status(500).json({ error: "Failed to update show" });
+  }
+};
+
+/**
+ * Admin: Delete a show
+ * DELETE /api/admin/shows/:id
+ */
+exports.deleteShow = async (req, res) => {
+  const { id } = req.params;
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    // Check if show has any CONFIRMED bookings
+    const bookingCheck = await client.query(
+      `SELECT COUNT(*) as count FROM bookings 
+       WHERE show_id = $1 AND status = 'CONFIRMED'`,
+      [id]
+    );
+
+    if (parseInt(bookingCheck.rows[0].count) > 0) {
+      await client.query("ROLLBACK");
+      return res.status(409).json({
+        error: "Cannot delete show with confirmed bookings",
+      });
+    }
+
+    // Delete all seats for this show
+    await client.query(`DELETE FROM seats WHERE show_id = $1`, [id]);
+
+    // Delete all bookings for this show
+    await client.query(`DELETE FROM bookings WHERE show_id = $1`, [id]);
+
+    // Delete the show
+    const result = await client.query(
+      `DELETE FROM shows WHERE id = $1 RETURNING id, name`,
+      [id]
+    );
+
+    await client.query("COMMIT");
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Show not found" });
+    }
+
+    res.json({
+      message: "Show deleted successfully",
+      show: result.rows[0],
+    });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("Error deleting show:", err);
+    res.status(500).json({ error: "Failed to delete show" });
+  } finally {
+    client.release();
   }
 };
