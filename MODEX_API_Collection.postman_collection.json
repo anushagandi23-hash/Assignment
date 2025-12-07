@@ -1,0 +1,451 @@
+{
+  "info": {
+    "name": "MODEX Ticket Booking System API",
+    "description": "Complete API collection for the Modex Ticket Booking System. Supports show management, seat booking, and booking management with SERIALIZABLE transactions and row-level locking for concurrency safety.",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "SHOW MANAGEMENT",
+      "description": "Endpoints for managing shows (create, retrieve)",
+      "item": [
+        {
+          "name": "1. Create New Show (Admin)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://localhost:4000/api/admin/shows",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4000",
+              "path": ["api", "admin", "shows"]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Concert 2025 - Taylor Swift\",\n  \"startTime\": \"2025-12-15T19:00:00Z\",\n  \"totalSeats\": 100\n}"
+            },
+            "description": "Create a new show with auto-generated seats\n\n**Parameters:**\n- `name` (string, required): Show/event name\n- `startTime` (ISO 8601 datetime, required): Show start time\n- `totalSeats` (number, required): Total number of seats to create (must be > 0)\n\n**Response:** Show details with auto-generated seat labels (A1, A2, ... Z10)"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "url": {
+                  "raw": "http://localhost:4000/api/admin/shows",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "4000",
+                  "path": ["api", "admin", "shows"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"message\": \"Show created successfully\",\n  \"show\": {\n    \"id\": 1,\n    \"name\": \"Concert 2025 - Taylor Swift\",\n    \"start_time\": \"2025-12-15T19:00:00.000Z\",\n    \"total_seats\": 100,\n    \"created_at\": \"2025-12-07T10:30:00.000Z\"\n  },\n  \"totalSeatsCreated\": 100\n}"
+            }
+          ]
+        },
+        {
+          "name": "2. Get All Shows (User)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:4000/api/shows",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4000",
+              "path": ["api", "shows"]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "description": "Get list of all available shows with seat statistics\n\n**Parameters:** None\n\n**Response:** Array of all shows with available and booked seat counts"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "http://localhost:4000/api/shows",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "4000",
+                  "path": ["api", "shows"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"shows\": [\n    {\n      \"id\": 1,\n      \"name\": \"Concert 2025 - Taylor Swift\",\n      \"start_time\": \"2025-12-15T19:00:00.000Z\",\n      \"total_seats\": 100,\n      \"available_seats\": 98,\n      \"created_at\": \"2025-12-07T10:30:00.000Z\"\n    }\n  ],\n  \"total\": 1\n}"
+            }
+          ]
+        },
+        {
+          "name": "3. Get Show Details with Seats (User)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:4000/api/shows/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4000",
+              "path": ["api", "shows", "1"]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "description": "Get detailed show information with all seat statuses\n\n**URL Parameters:**\n- `id` (number, required): Show ID\n\n**Response:** Show details with complete seat grid (all AVAILABLE/BOOKED seats)"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "http://localhost:4000/api/shows/1",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "4000",
+                  "path": ["api", "shows", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"show\": {\n    \"id\": 1,\n    \"name\": \"Concert 2025 - Taylor Swift\",\n    \"start_time\": \"2025-12-15T19:00:00.000Z\",\n    \"total_seats\": 100,\n    \"created_at\": \"2025-12-07T10:30:00.000Z\",\n    \"seats\": [\n      {\n        \"id\": 1,\n        \"seat_number\": \"A1\",\n        \"status\": \"AVAILABLE\"\n      },\n      {\n        \"id\": 2,\n        \"seat_number\": \"A2\",\n        \"status\": \"BOOKED\"\n      }\n    ],\n    \"availableSeats\": 98,\n    \"bookedSeats\": 2\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "BOOKING MANAGEMENT",
+      "description": "Endpoints for managing seat bookings with SERIALIZABLE transactions",
+      "item": [
+        {
+          "name": "4. Book Seats (User) - CORE",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://localhost:4000/api/shows/1/book",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4000",
+              "path": ["api", "shows", "1", "book"]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"seatNumbers\": [\"A1\", \"A2\", \"B1\"]\n}"
+            },
+            "description": "Book seats for a show with SERIALIZABLE transaction isolation\n\nThis endpoint uses:\n- Row-level locking (FOR UPDATE) to prevent race conditions\n- SERIALIZABLE isolation level for maximum consistency\n- Automatic seat status updates\n- 2-minute booking expiry timer\n\n**URL Parameters:**\n- `showId` (number, required): Show ID\n\n**Body Parameters:**\n- `seatNumbers` (array of strings, required): List of seat labels to book (e.g., [\"A1\", \"A2\", \"B3\"])\n\n**Response:** Booking confirmation with booking ID and details"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "url": {
+                  "raw": "http://localhost:4000/api/shows/1/book",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "4000",
+                  "path": ["api", "shows", "1", "book"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "body": "{\n  \"message\": \"Booking confirmed successfully\",\n  \"booking\": {\n    \"id\": 1,\n    \"showId\": 1,\n    \"seatNumbers\": [\"A1\", \"A2\", \"B1\"],\n    \"status\": \"CONFIRMED\",\n    \"createdAt\": \"2025-12-07T10:35:00.000Z\",\n    \"expiresAt\": \"2025-12-07T10:37:00.000Z\"\n  }\n}"
+            },
+            {
+              "name": "Conflict - Seats Already Booked",
+              "originalRequest": {
+                "method": "POST",
+                "url": {
+                  "raw": "http://localhost:4000/api/shows/1/book",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "4000",
+                  "path": ["api", "shows", "1", "book"]
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "body": "{\n  \"error\": \"Some seats are already booked or locked\",\n  \"unavailable\": [\"A1\", \"A2\"]\n}"
+            }
+          ]
+        },
+        {
+          "name": "5. Get Booking Details (User)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:4000/api/bookings/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4000",
+              "path": ["api", "bookings", "1"]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "description": "Get detailed booking information including seat numbers and expiry time\n\n**URL Parameters:**\n- `bookingId` (number, required): Booking ID\n\n**Response:** Complete booking details with all booked seats"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "http://localhost:4000/api/bookings/1",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "4000",
+                  "path": ["api", "bookings", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"booking\": {\n    \"id\": 1,\n    \"showId\": 1,\n    \"status\": \"CONFIRMED\",\n    \"seats\": [\"A1\", \"A2\", \"B1\"],\n    \"createdAt\": \"2025-12-07T10:35:00.000Z\",\n    \"expiresAt\": \"2025-12-07T10:37:00.000Z\",\n    \"updatedAt\": \"2025-12-07T10:35:00.000Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "6. Expire Pending Bookings (Admin/Cron)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "http://localhost:4000/api/admin/bookings/expire",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "4000",
+              "path": ["api", "admin", "bookings", "expire"]
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "description": "Expire all PENDING bookings that have exceeded their 2-minute timer\n\nThis endpoint:\n- Marks expired PENDING bookings as EXPIRED\n- Releases the booked seats (sets status back to AVAILABLE)\n- Runs automatically every 30 seconds (background service)\n- Can be called manually for immediate processing\n\n**Parameters:** None (runs immediately)\n\n**Response:** Number of bookings processed"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "url": {
+                  "raw": "http://localhost:4000/api/admin/bookings/expire",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "4000",
+                  "path": ["api", "admin", "bookings", "expire"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"message\": \"Expired bookings processed\",\n  \"processed\": 2\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "TESTING SCENARIOS",
+      "description": "Pre-configured test scenarios for common use cases",
+      "item": [
+        {
+          "name": "SCENARIO 1: Create Show and List Shows",
+          "item": [
+            {
+              "name": "1a. Create Show",
+              "request": {
+                "method": "POST",
+                "url": {
+                  "raw": "http://localhost:4000/api/admin/shows",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "4000",
+                  "path": ["api", "admin", "shows"]
+                },
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Test Show 1\",\n  \"startTime\": \"2025-12-20T18:00:00Z\",\n  \"totalSeats\": 50\n}"
+                }
+              }
+            },
+            {
+              "name": "1b. List All Shows",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "http://localhost:4000/api/shows",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "4000",
+                  "path": ["api", "shows"]
+                },
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "SCENARIO 2: View Show Details and Book Seats",
+          "item": [
+            {
+              "name": "2a. Get Show Details (Use show ID from above)",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "http://localhost:4000/api/shows/1",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "4000",
+                  "path": ["api", "shows", "1"]
+                },
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "2b. Book Seats",
+              "request": {
+                "method": "POST",
+                "url": {
+                  "raw": "http://localhost:4000/api/shows/1/book",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "4000",
+                  "path": ["api", "shows", "1", "book"]
+                },
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"seatNumbers\": [\"A1\", \"A2\", \"A3\"]\n}"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "SCENARIO 3: Check Booking Status",
+          "item": [
+            {
+              "name": "3a. Get Booking Details (Use booking ID from above)",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "http://localhost:4000/api/bookings/1",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "4000",
+                  "path": ["api", "bookings", "1"]
+                },
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "3b. Trigger Booking Expiry",
+              "request": {
+                "method": "POST",
+                "url": {
+                  "raw": "http://localhost:4000/api/admin/bookings/expire",
+                  "protocol": "http",
+                  "host": ["localhost"],
+                  "port": "4000",
+                  "path": ["api", "admin", "bookings", "expire"]
+                },
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:4000",
+      "type": "string"
+    },
+    {
+      "key": "api_version",
+      "value": "api",
+      "type": "string"
+    },
+    {
+      "key": "show_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "booking_id",
+      "value": "1",
+      "type": "string"
+    }
+  ]
+}

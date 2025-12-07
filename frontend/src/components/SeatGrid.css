@@ -1,0 +1,145 @@
+.seat-grid-container {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.legend {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.legend .seat {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 2px solid #ddd;
+}
+
+.legend .seat.available {
+  background-color: #fff;
+}
+
+.legend .seat.booked {
+  background-color: #f44336;
+  border-color: #f44336;
+}
+
+.legend .seat.selected {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+}
+
+.seat-grid {
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.seat-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.row-label {
+  font-weight: 600;
+  color: #333;
+  min-width: 30px;
+  text-align: center;
+}
+
+.seats {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.seat-btn {
+  width: 40px;
+  height: 40px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  color: #333;
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.seat-btn:hover:not(:disabled) {
+  border-color: #667eea;
+  background-color: #f8f9ff;
+  transform: scale(1.1);
+}
+
+.seat-btn.available:not(:disabled) {
+  cursor: pointer;
+}
+
+.seat-btn.booked,
+.seat-btn:disabled {
+  background-color: #f44336;
+  color: white;
+  border-color: #f44336;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.seat-btn.selected {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.seat-info {
+  text-align: center;
+  padding-top: 1rem;
+  border-top: 2px solid #eee;
+}
+
+.seat-info p {
+  margin: 0.5rem 0;
+  color: #333;
+  font-weight: 500;
+}
+
+.selected-list {
+  color: #667eea;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .seat-grid-container {
+    padding: 1rem;
+  }
+
+  .legend {
+    gap: 1rem;
+  }
+
+  .seat-btn {
+    width: 35px;
+    height: 35px;
+    font-size: 0.7rem;
+  }
+
+  .seat-row {
+    gap: 0.5rem;
+  }
+}
