@@ -6,6 +6,8 @@ import { BookingProvider } from './context/BookingContext';
 import { HomePage } from './pages/HomePage';
 import { BookingPage } from './pages/BookingPage';
 import { AdminPage } from './pages/AdminPage';
+import { SignInPage } from './pages/SignInPage';
+import { LoginPage } from './pages/LoginPage';
 import './App.css';
 
 const App: React.FC = () => {
@@ -16,6 +18,8 @@ const App: React.FC = () => {
           <BookingProvider>
             <Routes>
               <Route path="/" element={<HomePage />} />
+              <Route path="/signin" element={<SignInPage />} />
+              <Route path="/login" element={<LoginPage />} />
               <Route path="/booking/:showId" element={<BookingPage />} />
               <Route path="/admin" element={<AdminPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
