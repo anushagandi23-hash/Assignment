@@ -28,7 +28,7 @@ export const HomePage: React.FC = () => {
   };
 
   return (
-    <Layout title="Browse Available Shows">
+    <Layout title="Bus Tickets">
       {!isAuthenticated && (
         <div className="auth-prompt">
           <Alert type="info" message="Please select a role to continue" />
