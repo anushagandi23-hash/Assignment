@@ -41,6 +41,15 @@ export const SeatGrid: React.FC<SeatGridProps> = ({
     seatsByRow[row].push(seat);
   });
 
+  // Sort seats within each row numerically
+  Object.keys(seatsByRow).forEach(row => {
+    seatsByRow[row].sort((a, b) => {
+      const numA = parseInt(a.seat_number.slice(1), 10);
+      const numB = parseInt(b.seat_number.slice(1), 10);
+      return numA - numB;
+    });
+  });
+
   return (
     <div className="seat-grid-container">
       <div className="legend">
@@ -59,7 +68,9 @@ export const SeatGrid: React.FC<SeatGridProps> = ({
       </div>
 
       <div className="seat-grid">
-        {Object.entries(seatsByRow).map(([row, rowSeats]) => (
+        {Object.entries(seatsByRow)
+          .sort(([rowA], [rowB]) => rowA.localeCompare(rowB))
+          .map(([row, rowSeats]) => (
           <div key={row} className="seat-row">
             <span className="row-label">{row}</span>
             <div className="seats">
